@@ -40,10 +40,12 @@ class ResidentApi {
     required String areaId,
     required DateTime date,
     int? durationMinutes,
+    String? excludeReservationId,
   }) async {
     final day = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     final q = StringBuffer('/common-areas/$areaId/availability?date=$day');
     if (durationMinutes != null) q.write('&duration_minutes=$durationMinutes');
+    if (excludeReservationId != null) q.write('&exclude_reservation_id=$excludeReservationId');
     final result = await _client.get(q.toString());
     return Map<String, dynamic>.from(result as Map);
   }
@@ -70,6 +72,23 @@ class ResidentApi {
 
   Future<Map<String, dynamic>> cancelReservation(String reservationId) async {
     final result = await _client.patch('/reservations/$reservationId/cancel');
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  Future<Map<String, dynamic>> rescheduleReservation({
+    required String reservationId,
+    required DateTime startsAt,
+    required DateTime endsAt,
+  }) async {
+    final result = await _client.patch('/reservations/$reservationId/reschedule', body: {
+      'starts_at': startsAt.toUtc().toIso8601String(),
+      'ends_at': endsAt.toUtc().toIso8601String(),
+    });
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  Future<Map<String, dynamic>> getReservationReceipt(String reservationId) async {
+    final result = await _client.get('/reservations/$reservationId/receipt');
     return Map<String, dynamic>.from(result as Map);
   }
 

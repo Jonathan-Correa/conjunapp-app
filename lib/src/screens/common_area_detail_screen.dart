@@ -185,6 +185,26 @@ class _CommonAreaDetailScreenState extends State<CommonAreaDetailScreen> {
               const SizedBox(height: 6),
               Text((area['rules']?.toString().isNotEmpty == true) ? area['rules'].toString() : 'Sin reglamento publicado.'),
               const SizedBox(height: 16),
+              Builder(
+                builder: (context) {
+                  final docs = ((area['required_documents'] as List?) ?? []).map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+                  if (docs.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Documentos requeridos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 6),
+                      ...docs.map((d) => ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.description_outlined, size: 20),
+                            title: Text(d),
+                          )),
+                      const SizedBox(height: 16),
+                    ],
+                  );
+                },
+              ),
               if (schedules.isNotEmpty) ...[
                 Text('Horarios', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
