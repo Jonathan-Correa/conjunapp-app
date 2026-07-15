@@ -8,7 +8,19 @@ Aplicación Flutter para residentes de conjuntos residenciales.
 - Provider
 - http + flutter_secure_storage
 
-## Instalación
+## Probar en el navegador (recomendado)
+
+Con el monorepo en marcha:
+
+```bash
+# desde la raíz Conjuntos
+docker compose up --build resident
+```
+
+Abre http://localhost:5174  
+Login: `ana@example.com` / `residente123`
+
+## Instalación nativa (móvil / desktop)
 
 ```bash
 flutter pub get
@@ -21,21 +33,22 @@ flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
 ```
 
+### Chrome local (sin Docker de la app)
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000/api/v1
+```
+
 ## Variables
 
-No hay `.env` cargado en runtime. Usa `--dart-define=API_BASE_URL=...`.
-Plantilla documentada en `.env.example`.
+No hay `.env` cargado en runtime. Usa `--dart-define=API_BASE_URL=...` o el build-arg `API_BASE_URL` / `RESIDENT_API_BASE_URL` en Compose.
 
 ## Docker
 
-El flujo diario de la app es con el SDK Flutter en el host. El monorepo levanta API + admin con Compose.
-
-Build web opcional:
-
-```bash
-docker build -f Dockerfile.web -t conjunapp-app-web \
-  --build-arg API_BASE_URL=http://localhost:8000/api/v1 .
-```
+| Archivo | Uso |
+|---------|-----|
+| `Dockerfile.web` | Build release web → nginx |
+| `nginx.conf` | SPA + `/health` |
 
 ## Credenciales demo
 
