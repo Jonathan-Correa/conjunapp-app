@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/services/auth_service.dart';
 import 'src/services/api_client.dart';
+import 'src/services/resident_api.dart';
 import 'src/providers/auth_provider.dart';
 import 'src/models/auth.dart';
 import 'src/screens/login_screen.dart';
@@ -14,6 +15,9 @@ void main() {
         Provider(create: (_) => AuthService()),
         ProxyProvider<AuthService, ApiClient>(
           update: (_, auth, __) => ApiClient(authService: auth),
+        ),
+        ProxyProvider<ApiClient, ResidentApi>(
+          update: (_, client, __) => ResidentApi(client),
         ),
         ChangeNotifierProvider(
           create: (context) => AuthProvider(

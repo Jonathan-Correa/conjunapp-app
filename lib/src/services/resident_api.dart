@@ -36,6 +36,18 @@ class ResidentApi {
     return Map<String, dynamic>.from(result as Map);
   }
 
+  Future<Map<String, dynamic>> getAvailability({
+    required String areaId,
+    required DateTime date,
+    int? durationMinutes,
+  }) async {
+    final day = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final q = StringBuffer('/common-areas/$areaId/availability?date=$day');
+    if (durationMinutes != null) q.write('&duration_minutes=$durationMinutes');
+    final result = await _client.get(q.toString());
+    return Map<String, dynamic>.from(result as Map);
+  }
+
   Future<List<Map<String, dynamic>>> listReservations() async {
     final items = await _client.getList('/reservations');
     return items.cast<Map<String, dynamic>>();

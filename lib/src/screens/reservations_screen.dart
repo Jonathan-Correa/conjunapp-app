@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+
 import '../services/api_client.dart';
 import '../services/resident_api.dart';
+import 'common_areas_screen.dart';
 
-final _money = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
+final _money = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
 final _dt = DateFormat('dd/MM/yyyy HH:mm');
+
+const _statusLabels = {
+  'requested': 'Solicitada',
+  'approved': 'Aprobada',
+  'paid': 'Pagada',
+  'waitlisted': 'En lista',
+  'cancelled': 'Cancelada',
+  'rescheduled': 'Reprogramada',
+  'rejected': 'Rechazada',
+};
 
 class ReservationsScreen extends StatefulWidget {
   const ReservationsScreen({super.key});
@@ -20,7 +31,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _reservations = [];
-  List<Map<String, dynamic>> _areas = [];
   Map<String, String> _areaNames = {};
 
   @override
@@ -46,7 +56,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       final areas = results[1];
       setState(() {
         _reservations = results[0];
-        _areas = areas;
         _areaNames = {
           for (final a in areas) a['id'].toString(): a['name'].toString(),
         };
@@ -61,115 +70,9 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     }
   }
 
-  Future<void> _createReservation() async {
-    if (_areas.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay zonas comunes disponibles')),
-      );
-      return;
-    }
-
-    String areaId = _areas.first['id'].toString();
-    DateTime startsAt = DateTime.now().add(const Duration(days: 1));
-    startsAt = DateTime(startsAt.year, startsAt.month, startsAt.day, 10);
-    int hours = 2;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              title: const Text('Nueva reserva'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: areaId,
-                      decoration: const InputDecoration(labelText: 'Zona común'),
-                      items: _areas
-                          .map(
-                            (a) => DropdownMenuItem(
-                              value: a['id'].toString(),
-                              child: Text(
-                                '${a['name']} (${_money.format(num.parse(a['hourly_rate'].toString()))}/h)',
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) => setLocal(() => areaId = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('Inicio: ${_dt.format(startsAt)}'),
-                      trailing: const Icon(Icons.event),
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: startsAt,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 90)),
-                        );
-                        if (date == null || !context.mounted) return;
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.fromDateTime(startsAt),
-                        );
-                        if (time == null) return;
-                        setLocal(() {
-                          startsAt = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        });
-                      },
-                    ),
-                    DropdownButtonFormField<int>(
-                      value: hours,
-                      decoration: const InputDecoration(labelText: 'Duración (horas)'),
-                      items: [1, 2, 3, 4]
-                          .map((h) => DropdownMenuItem(value: h, child: Text('$h')))
-                          .toList(),
-                      onChanged: (v) => setLocal(() => hours = v ?? 2),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-                FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Reservar')),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (ok != true || !mounted) return;
-    final residentId = context.read<AuthProvider>().user?.residentId;
-    if (residentId == null) return;
-
-    try {
-      await _api!.createReservation(
-        residentId: residentId,
-        commonAreaId: areaId,
-        startsAt: startsAt,
-        endsAt: startsAt.add(Duration(hours: hours)),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reserva creada')),
-      );
-      await _load();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
+  Future<void> _openCatalog() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CommonAreasScreen()));
+    if (mounted) await _load();
   }
 
   Future<void> _cancel(String id) async {
@@ -205,7 +108,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _loading ? null : _createReservation,
+        onPressed: _loading ? null : _openCatalog,
         backgroundColor: const Color(0xff176b5c),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -235,7 +138,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
       );
     }
     if (_reservations.isEmpty) {
-      return const Center(child: Text('Aún no tienes reservas.'));
+      return const Center(child: Text('Aún no tienes reservas. Usa Reservar para ver zonas sociales.'));
     }
 
     return ListView.separated(
@@ -250,13 +153,14 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
         final ends = DateTime.parse(r['ends_at'].toString()).toLocal();
         final amount = num.parse(r['amount'].toString());
         final cancellable = status == 'requested' || status == 'approved' || status == 'waitlisted';
+        final label = _statusLabels[status] ?? status;
 
         return Card(
           child: ListTile(
             title: Text(areaName, style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(
               '${_dt.format(starts)} → ${_dt.format(ends)}\n'
-              'Estado: $status · ${_money.format(amount)}',
+              'Estado: $label · ${_money.format(amount)}',
             ),
             isThreeLine: true,
             trailing: cancellable
