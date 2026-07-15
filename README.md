@@ -1,17 +1,46 @@
-# conjunapp_resident
+# ConjunApp App (Residentes)
 
-A new Flutter project.
+Aplicación Flutter para residentes de conjuntos residenciales.
 
-## Getting Started
+## Stack
 
-This project is a starting point for a Flutter application.
+- Flutter / Dart (`>=3.6.0 <4.0.0`)
+- Provider
+- http + flutter_secure_storage
 
-A few resources to get you started if this is your first Flutter project:
+## Instalación
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://localhost:8000/api/v1
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Emulador Android (API en Docker/host)
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+```
+
+## Variables
+
+No hay `.env` cargado en runtime. Usa `--dart-define=API_BASE_URL=...`.
+Plantilla documentada en `.env.example`.
+
+## Docker
+
+El flujo diario de la app es con el SDK Flutter en el host. El monorepo levanta API + admin con Compose.
+
+Build web opcional:
+
+```bash
+docker build -f Dockerfile.web -t conjunapp-app-web \
+  --build-arg API_BASE_URL=http://localhost:8000/api/v1 .
+```
+
+## Credenciales demo
+
+`ana@example.com` / `residente123`
+
+## Documentación
+
+[../docs/App.md](../docs/App.md)
