@@ -100,6 +100,60 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     }
   }
 
+  Future<void> _pay(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pagar reserva'),
+        content: const Text('Se simulará un pago PSE (stub). ¿Continuar?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Pagar')),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    try {
+      await _api!.payReservation(id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pago registrado')));
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _showAccessPass(String id) async {
+    try {
+      final pass = await _api!.getAccessPass(id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Pase de acceso'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Código: ${pass['code']}'),
+              Text('PIN: ${pass['pin'] ?? '—'}'),
+              Text('Tipo: ${pass['kind']}'),
+              Text('Proveedor: ${pass['provider']}'),
+              Text('Vence: ${_dt.format(DateTime.parse(pass['expires_at'].toString()).toLocal())}'),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   Future<void> _showReceipt(String id) async {
     try {
       final receipt = await _api!.getReservationReceipt(id);
@@ -254,10 +308,13 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
         final starts = DateTime.parse(r['starts_at'].toString()).toLocal();
         final ends = DateTime.parse(r['ends_at'].toString()).toLocal();
         final amount = num.parse(r['amount'].toString());
-        final active = status == 'requested' || status == 'approved';
+        final active = status == 'requested' || status == 'approved' || status == 'paid';
+        final needsPay = status == 'approved' && amount > 0;
+        final canAccess = status == 'paid' || (status == 'approved' && amount <= 0);
         final hasReceipt = status == 'approved' || status == 'paid' || status == 'completed';
         final label = _statusLabels[status] ?? status;
         final receipt = r['receipt_number']?.toString();
+        final payRef = r['payment_reference']?.toString();
 
         return Card(
           child: ListTile(
@@ -265,12 +322,25 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
             subtitle: Text(
               '${_dt.format(starts)} → ${_dt.format(ends)}\n'
               'Estado: $label · ${_money.format(amount)}'
-              '${receipt != null && receipt.isNotEmpty ? ' · $receipt' : ''}',
+              '${receipt != null && receipt.isNotEmpty ? ' · $receipt' : ''}'
+              '${payRef != null && payRef.isNotEmpty ? ' · $payRef' : ''}',
             ),
             isThreeLine: true,
             trailing: Wrap(
               spacing: 0,
               children: [
+                if (needsPay)
+                  IconButton(
+                    tooltip: 'Pagar',
+                    onPressed: () => _pay(r['id'].toString()),
+                    icon: const Icon(Icons.payments_outlined, color: Color(0xff176b5c)),
+                  ),
+                if (canAccess)
+                  IconButton(
+                    tooltip: 'Pase de acceso',
+                    onPressed: () => _showAccessPass(r['id'].toString()),
+                    icon: const Icon(Icons.qr_code_2),
+                  ),
                 if (hasReceipt)
                   IconButton(
                     tooltip: 'Comprobante',

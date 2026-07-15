@@ -92,6 +92,18 @@ class ResidentApi {
     return Map<String, dynamic>.from(result as Map);
   }
 
+  Future<Map<String, dynamic>> payReservation(String reservationId, {String method = 'PSE'}) async {
+    final result = await _client.post('/reservations/$reservationId/pay', body: {
+      'method': method,
+    });
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  Future<Map<String, dynamic>> getAccessPass(String reservationId) async {
+    final result = await _client.get('/reservations/$reservationId/access-pass');
+    return Map<String, dynamic>.from(result as Map);
+  }
+
   Future<List<Map<String, dynamic>>> listVisitors() async {
     final items = await _client.getList('/visitors');
     return items.cast<Map<String, dynamic>>();
