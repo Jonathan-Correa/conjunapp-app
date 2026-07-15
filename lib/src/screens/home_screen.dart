@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'announcements_screen.dart';
+import 'common_areas_screen.dart';
 import 'invoices_screen.dart';
 import 'reservations_screen.dart';
 import 'visitors_screen.dart';
@@ -139,6 +140,12 @@ class HomeScreen extends StatelessWidget {
                       title: 'Mis Reservas',
                       color: Colors.orange,
                       onTap: () => _open(context, const ReservationsScreen()),
+                    ),
+                    _QuickActionCard(
+                      icon: Icons.park_outlined,
+                      title: 'Zonas Sociales',
+                      color: Colors.green,
+                      onTap: () => _open(context, const CommonAreasScreen()),
                     ),
                     _QuickActionCard(
                       icon: Icons.badge_outlined,

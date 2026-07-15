@@ -31,6 +31,11 @@ class ResidentApi {
     return items.cast<Map<String, dynamic>>();
   }
 
+  Future<Map<String, dynamic>> getCommonArea(String areaId) async {
+    final result = await _client.get('/common-areas/$areaId');
+    return Map<String, dynamic>.from(result as Map);
+  }
+
   Future<List<Map<String, dynamic>>> listReservations() async {
     final items = await _client.getList('/reservations');
     return items.cast<Map<String, dynamic>>();
