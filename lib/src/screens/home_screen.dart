@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'announcements_screen.dart';
+import 'invoices_screen.dart';
+import 'reservations_screen.dart';
+import 'visitors_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,6 +34,10 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
+  void _open(BuildContext context, Widget page) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,32 +53,19 @@ class HomeScreen extends StatelessWidget {
             child: Consumer<AuthProvider>(
               builder: (context, authProvider, _) {
                 return PopupMenuButton<int>(
-                  itemBuilder: (context) => [
-                    PopupMenuItem<int>(
-                      value: 0,
-                      child: const Text('Mi perfil'),
-                      onTap: () {},
-                    ),
-                    PopupMenuItem<int>(
-                      value: 1,
-                      child: const Text('Configuración'),
-                      onTap: () {},
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<int>(
-                      value: 2,
-                      child: const Text('Cerrar sesión'),
-                      onTap: () => _handleLogout(context),
-                    ),
+                  onSelected: (value) {
+                    if (value == 2) {
+                      _handleLogout(context);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<int>(value: 2, child: Text('Cerrar sesión')),
                   ],
                   child: CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.3),
+                    backgroundColor: Colors.white.withValues(alpha: 0.3),
                     child: Text(
-                      (authProvider.user?.fullName ?? 'U')
-                          .substring(0, 1)
-                          .toUpperCase(),
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                      (authProvider.user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 );
@@ -86,23 +81,18 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome Card
                 Card(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xff176b5c),
-                          Color(0xff0d4a3a),
-                        ],
+                        colors: [Color(0xff176b5c), Color(0xff0d4a3a)],
                       ),
                     ),
                     child: Column(
@@ -119,23 +109,16 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Unidad: ${authProvider.user?.unit ?? 'N/A'}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
-                          ),
+                          style: const TextStyle(fontSize: 16, color: Colors.white70),
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Quick Actions
                 Text(
                   'Acciones rápidas',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 GridView.count(
@@ -146,39 +129,35 @@ class HomeScreen extends StatelessWidget {
                   mainAxisSpacing: 12,
                   children: [
                     _QuickActionCard(
-                      icon: Icons.receipt,
+                      icon: Icons.receipt_long,
                       title: 'Mis Facturas',
                       color: Colors.blue,
-                      onTap: () {},
+                      onTap: () => _open(context, const InvoicesScreen()),
                     ),
                     _QuickActionCard(
-                      icon: Icons.calendar_today,
+                      icon: Icons.calendar_month,
                       title: 'Mis Reservas',
                       color: Colors.orange,
-                      onTap: () {},
+                      onTap: () => _open(context, const ReservationsScreen()),
                     ),
                     _QuickActionCard(
-                      icon: Icons.directions_car,
-                      title: 'Mis Vehículos',
-                      color: Colors.green,
-                      onTap: () {},
+                      icon: Icons.badge_outlined,
+                      title: 'Visitantes',
+                      color: Colors.teal,
+                      onTap: () => _open(context, const VisitorsScreen()),
                     ),
                     _QuickActionCard(
-                      icon: Icons.pets,
-                      title: 'Mis Mascotas',
-                      color: Colors.purple,
-                      onTap: () {},
+                      icon: Icons.campaign_outlined,
+                      title: 'Comunicados',
+                      color: Colors.indigo,
+                      onTap: () => _open(context, const AnnouncementsScreen()),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-
-                // User Info
                 Text(
                   'Mi información',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 Card(
@@ -186,25 +165,13 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        _InfoRow(
-                          label: 'Correo',
-                          value: authProvider.user?.email ?? 'N/A',
-                        ),
+                        _InfoRow(label: 'Correo', value: authProvider.user?.email ?? 'N/A'),
                         const Divider(),
-                        _InfoRow(
-                          label: 'Teléfono',
-                          value: authProvider.user?.phone ?? 'N/A',
-                        ),
+                        _InfoRow(label: 'Teléfono', value: authProvider.user?.phone ?? 'N/A'),
                         const Divider(),
-                        _InfoRow(
-                          label: 'Documento',
-                          value: authProvider.user?.documentNumber ?? 'N/A',
-                        ),
+                        _InfoRow(label: 'Documento', value: authProvider.user?.documentNumber ?? 'N/A'),
                         const Divider(),
-                        _InfoRow(
-                          label: 'Unidad',
-                          value: authProvider.user?.unit ?? 'N/A',
-                        ),
+                        _InfoRow(label: 'Unidad', value: authProvider.user?.unit ?? 'N/A'),
                       ],
                     ),
                   ),
@@ -235,9 +202,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -249,8 +214,8 @@ class _QuickActionCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                color.withOpacity(0.8),
-                color.withOpacity(0.6),
+                color.withValues(alpha: 0.85),
+                color.withValues(alpha: 0.65),
               ],
             ),
           ),
@@ -280,10 +245,7 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -300,12 +262,15 @@ class _InfoRow extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xff176b5c),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xff176b5c),
+              ),
             ),
           ),
         ],

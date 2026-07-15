@@ -30,26 +30,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
   List<Map<String, dynamic>> _towers = [];
   Map<String, List<Map<String, dynamic>>> _unitsByTower = {};
+  bool _towersLoaded = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadTowers();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_towersLoaded) {
+      _towersLoaded = true;
+      _loadTowers();
+    }
   }
 
   Future<void> _loadTowers() async {
     try {
-      final client = ApiClient();
+      final client = context.read<ApiClient>();
       final response = await client.get('/towers');
+      if (!mounted) return;
 
       setState(() {
-        _towers = List<Map<String, dynamic>>.from(response);
+        _towers = List<Map<String, dynamic>>.from(response as List);
         for (var tower in _towers) {
-          _unitsByTower[tower['name']] =
+          _unitsByTower[tower['name'] as String] =
               List<Map<String, dynamic>>.from(tower['units'] ?? []);
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Error al cargar torres: ${e.toString()}';
       });
@@ -91,8 +97,8 @@ class _SignupScreenState extends State<SignupScreen> {
         'unit_number': _selectedUnit,
       };
 
-      final client = ApiClient();
-      final response = await client.post('/auth/resident/register', body: payload);
+      final client = context.read<ApiClient>();
+      await client.post('/auth/resident/register', body: payload);
 
       // Now login with the response
       await authProvider.login(
