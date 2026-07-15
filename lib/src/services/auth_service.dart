@@ -63,9 +63,9 @@ class AuthService {
         jsonDecode(response.body) as Map<String, dynamic>,
       );
     } else if (response.statusCode == 401) {
-      // Token expirado o inválido
+      final error = _parseErrorResponse(response);
       await logout();
-      throw AuthException('Sesión expirada');
+      throw AuthException(error ?? 'Sesión expirada o inválida');
     } else {
       final error = _parseErrorResponse(response);
       throw AuthException(error ?? 'Error al obtener usuario');
